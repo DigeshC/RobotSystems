@@ -1,3 +1,7 @@
+# Repository Info
+
+This repository is a copy of the [picar-x](https://github.com/sunfounder/picar-x) and [robot-hat](https://github.com/sunfounder/robot-hat/tree/v2.0/robot_hat) github for ROB 515: Intro to Robotics II
+
 # Picar-X
 
 Picar-X Python library for Raspberry Pi.
