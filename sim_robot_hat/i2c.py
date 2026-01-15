@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from .basic import _Basic_class
 from .utils import run_command
-from smbus2 import SMBus
+# from smbus2 import SMBus
 import multiprocessing
 
 
@@ -38,6 +38,7 @@ class I2C(_Basic_class):
         :type bus: int
         """
         super().__init__(*args, **kwargs)
+        return
         self._bus = bus
         self._smbus = SMBus(self._bus)
         if isinstance(address, list):
@@ -69,6 +70,7 @@ class I2C(_Basic_class):
     @_retry_wrapper
     def _write_word_data(self, reg, data):
         # with I2C.i2c_lock.get_lock():
+        return
         self._debug(f"_write_word_data: [0x{reg:02X}] [0x{data:04X}]")
         return self._smbus.write_word_data(self.address, reg, data)
 
@@ -258,6 +260,7 @@ class I2C(_Basic_class):
         return self.address in self.scan()
 
     def __del__(self):
+        return
         self._smbus.close()
         self._smbus = None
 

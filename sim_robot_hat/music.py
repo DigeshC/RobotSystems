@@ -2,7 +2,7 @@
 from .basic import _Basic_class
 import time
 import threading
-import pyaudio
+# import pyaudiopi
 import os
 import struct
 import math
@@ -11,7 +11,7 @@ from .utils import enable_speaker, disable_speaker
 class Music(_Basic_class):
     """Play music, sound affect and note control"""
 
-    FORMAT = pyaudio.paInt16
+    # FORMAT = pyaudio.paInt16
     CHANNELS = 1
     RATE = 44100
 
@@ -59,6 +59,7 @@ class Music(_Basic_class):
     """Notes name, MIDI compatible"""
 
     def __init__(self):
+        return
         import warnings
         warnings_bk = warnings.filters
         warnings.filterwarnings("ignore")

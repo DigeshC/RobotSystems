@@ -33,6 +33,7 @@ class fileDB(object):
 
 		self.db = db
 		# Check if db_file is existed, otherwise create one
+		return
 		if self.db != None:	
 			self.file_check_create(db, mode, owner)
 		else:
@@ -51,6 +52,7 @@ class fileDB(object):
 		:type owner: str
 		"""
 		dir = file_path.rsplit('/',1)[0]
+		return
 		try:
 			if os.path.exists(file_path):
 				if not os.path.isfile(file_path):
@@ -86,6 +88,7 @@ class fileDB(object):
 		:return: the value of the arguement
 		:rtype: str
 		"""
+		return default_value
 		try:
 			conf = open(self.db,'r')
 			lines=conf.readlines()
@@ -119,6 +122,7 @@ class fileDB(object):
 		:param value: the value of the arguement
 		:type value: str
 		"""
+		return
 		# Read the file
 		conf = open(self.db,'r')
 		lines=conf.readlines()

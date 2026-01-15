@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from .basic import _Basic_class
-import gpiozero  # https://gpiozero.readthedocs.io/en/latest/installing.html
-from gpiozero import OutputDevice, InputDevice, Button
+# import gpiozero  # https://gpiozero.readthedocs.io/en/latest/installing.html
+# from gpiozero import OutputDevice, InputDevice, Button
 
 
 class Pin(_Basic_class):
@@ -71,6 +71,7 @@ class Pin(_Basic_class):
         :type active_state: bool or None
         """
         super().__init__(*args, **kwargs)
+        pass
 
         # parse pin
         if isinstance(pin, str):
@@ -97,6 +98,7 @@ class Pin(_Basic_class):
         self._info("Pin init finished.")
 
     def close(self):
+        return
         self.gpio.close()
 
     def deinit(self):
@@ -126,6 +128,7 @@ class Pin(_Basic_class):
                 f'pull param error, should be None, Pin.PULL_NONE, Pin.PULL_DOWN, Pin.PULL_UP'
             )
         #
+        return
         if self.gpio != None:
             if self.gpio.pin != None:
                 self.gpio.close()
@@ -178,6 +181,7 @@ class Pin(_Basic_class):
         :return: pin value(0/1)
         :rtype: int
         """
+        return 0
         if value == None:
             if self._mode in [None, self.OUT]:
                 self.setup(self.IN)

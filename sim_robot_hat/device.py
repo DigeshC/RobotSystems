@@ -28,6 +28,7 @@ class Devices():
     motor_mode = 1
 
     def __init__(self):
+        return
         hat_path = None
         for file in os.listdir('/proc/device-tree/'):
             if 'hat' in file:
