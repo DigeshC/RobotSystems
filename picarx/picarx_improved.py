@@ -14,6 +14,7 @@ except ImportError:
 import time
 
 import logging
+import math
 
 logging_format = "%(asctime)s: %(message)s"
 logging.basicConfig(format=logging_format, level=logging.INFO,
@@ -44,6 +45,10 @@ class Picarx(object):
     PERIOD = 4095
     PRESCALER = 10
     TIMEOUT = 0.02
+
+    WHEELBASE_MM = 94.24
+    TRACK_WIDTH_MM = 117.1
+
 
     # servo_pins: camera_pan_servo, camera_tilt_servo, direction_servo
     # motor_pins: left_swicth, right_swicth, left_pwm, right_pwm
@@ -195,19 +200,50 @@ class Picarx(object):
         self.set_motor_speed(1, speed)
         self.set_motor_speed(2, speed)
 
+    def ackerman_power_scale(self, steering_angle_deg: float) -> float:
+        """
+        Geometry-based Ackermann approximation:
+        returns inner/outer wheel speed ratio in [0, 1].
+        """
+        steer = constrain(steering_angle_deg, self.DIR_MIN, self.DIR_MAX)
+
+        # straight
+        if abs(steer) < 1e-6:
+            return 1.0
+
+        delta = math.radians(abs(steer))  # assume servo deg ~= wheel steer deg
+
+        # Turning radius of rear axle center
+        # R = L / tan(delta)
+        tan_delta = math.tan(delta)
+        if abs(tan_delta) < 1e-6:
+            return 1.0
+
+        L = self.WHEELBASE_MM
+        W = self.TRACK_WIDTH_MM
+        R = L / tan_delta
+        halfW = W / 2.0
+
+        # Inner/outer ratio (outer normalized to 1.0)
+        ratio = (R - halfW) / (R + halfW)
+
+        # Safety clamp
+        return constrain(ratio, 0.0, 1.0)
+
+
     def backward(self, speed):
         current_angle = self.dir_current_angle
         if current_angle != 0:
             abs_current_angle = abs(current_angle)
             if abs_current_angle > self.DIR_MAX:
                 abs_current_angle = self.DIR_MAX
-            power_scale = (100 - abs_current_angle) / 100.0 
+            ratio = self.ackerman_power_scale(current_angle)
             if (current_angle / abs_current_angle) > 0:
                 self.set_motor_speed(1, -1*speed)
-                self.set_motor_speed(2, speed * power_scale)
+                self.set_motor_speed(2, speed * ratio)
             else:
-                self.set_motor_speed(1, -1*speed * power_scale)
-                self.set_motor_speed(2, speed )
+                self.set_motor_speed(1, -1*speed)
+                self.set_motor_speed(2, speed * ratio)
         else:
             self.set_motor_speed(1, -1*speed)
             self.set_motor_speed(2, speed)  
@@ -218,13 +254,13 @@ class Picarx(object):
             abs_current_angle = abs(current_angle)
             if abs_current_angle > self.DIR_MAX:
                 abs_current_angle = self.DIR_MAX
-            power_scale = (100 - abs_current_angle) / 100.0
+            ratio = self.ackerman_power_scale(current_angle)
             if (current_angle / abs_current_angle) > 0:
-                self.set_motor_speed(1, 1*speed * power_scale)
-                self.set_motor_speed(2, -speed) 
+                self.set_motor_speed(1, 1*speed)
+                self.set_motor_speed(2, -speed * ratio) 
             else:
                 self.set_motor_speed(1, speed)
-                self.set_motor_speed(2, -1*speed * power_scale)
+                self.set_motor_speed(2, -1*speed * ratio)
         else:
             self.set_motor_speed(1, speed)
             self.set_motor_speed(2, -1*speed)                  
@@ -283,6 +319,26 @@ class Picarx(object):
 
 if __name__ == "__main__":
     px = Picarx()
-    px.forward(50)
-    time.sleep(1)
-    px.stop()
+    try:
+        px.forward(50)
+        time.sleep(1)
+        logging.info("current steering angle: %d"%px.dir_current_angle)
+        px.set_dir_servo_angle(20)
+        logging.info("current steering angle: %d"%px.dir_current_angle)
+        time.sleep(1)
+        px.forward(50)
+        time.sleep(1)
+        logging.info("current steering angle: %d"%px.dir_current_angle)
+        px.set_dir_servo_angle(-20)
+        logging.info("current steering angle: %d"%px.dir_current_angle)
+        time.sleep(1)
+        px.forward(50)
+        time.sleep(1)
+        px.stop()
+    except KeyboardInterrupt:
+        logging.info("\nCtrl+C pressed. Performing cleanup...")
+        # Place your cleanup code here
+        px.reset()
+        logging.info("Cleanup complete. Exiting.")
+    finally:
+        px.reset()
