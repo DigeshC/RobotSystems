@@ -18,11 +18,10 @@ import math
 import atexit
 from logdecorator import log_on_start, log_on_end, log_on_error
 
-logging_format = "%(asctime)s [%(levelname)s]: %(message)s"
-logging.basicConfig(format=logging_format, level=logging.INFO,
-                    datefmt="%H:%M:%S")
+from helper.logging_config import setup_logging
+setup_logging()
 
-logging.getLogger().setLevel(logging.INFO)
+logger = logging.getLogger("PiCarx_Improved")
 
 def constrain(x, min_val, max_val):
     '''
@@ -63,7 +62,7 @@ class Picarx(object):
                 ultrasonic_pins:list=['D2','D3'],
                 config:str=CONFIG,
                 ):
-        logging.info("Picarx init")
+        logger.info("Picarx init")
         # reset robot_hat
         utils.reset_mcu()
         time.sleep(0.2)
@@ -314,8 +313,8 @@ class Picarx(object):
         self.set_cam_tilt_angle(0)
         self.set_cam_pan_angle(0)
 
-    @log_on_start(logging.DEBUG, "Attempting to close PiCar")
-    @log_on_end(logging.INFO, "Successfully closed PiCar")
+    @log_on_start(logging.DEBUG, "Attempting to close PiCar", logger=logger)
+    @log_on_end(logging.INFO, "Successfully closed PiCar", logger=logger)
     def close(self):
         self.reset()
         self.ultrasonic.close()
@@ -325,15 +324,15 @@ if __name__ == "__main__":
     atexit.register(px.close)
     px.forward(50)
     time.sleep(1)
-    logging.info("current steering angle: %d"%px.dir_current_angle)
+    logger.info("current steering angle: %d"%px.dir_current_angle)
     px.set_dir_servo_angle(20)
-    logging.info("current steering angle: %d"%px.dir_current_angle)
+    logger.info("current steering angle: %d"%px.dir_current_angle)
     time.sleep(1)
     px.forward(50)
     time.sleep(1)
-    logging.info("current steering angle: %d"%px.dir_current_angle)
+    logger.info("current steering angle: %d"%px.dir_current_angle)
     px.set_dir_servo_angle(-20)
-    logging.info("current steering angle: %d"%px.dir_current_angle)
+    logger.info("current steering angle: %d"%px.dir_current_angle)
     time.sleep(1)
     px.forward(50)
     time.sleep(1)
