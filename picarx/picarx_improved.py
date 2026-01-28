@@ -15,13 +15,14 @@ import time
 
 import logging
 import math
+import atexit
+from logdecorator import log_on_start, log_on_end, log_on_error
 
-logging_format = "%(asctime)s: %(message)s"
+logging_format = "%(asctime)s [%(levelname)s]: %(message)s"
 logging.basicConfig(format=logging_format, level=logging.INFO,
                     datefmt="%H:%M:%S")
 
-logging.getLogger().setLevel(logging.DEBUG)
-
+logging.getLogger().setLevel(logging.INFO)
 
 def constrain(x, min_val, max_val):
     '''
@@ -313,32 +314,26 @@ class Picarx(object):
         self.set_cam_tilt_angle(0)
         self.set_cam_pan_angle(0)
 
+    @log_on_start(logging.DEBUG, "Attempting to close PiCar")
+    @log_on_end(logging.INFO, "Successfully closed PiCar")
     def close(self):
         self.reset()
         self.ultrasonic.close()
 
 if __name__ == "__main__":
     px = Picarx()
-    try:
-        px.forward(50)
-        time.sleep(1)
-        logging.info("current steering angle: %d"%px.dir_current_angle)
-        px.set_dir_servo_angle(20)
-        logging.info("current steering angle: %d"%px.dir_current_angle)
-        time.sleep(1)
-        px.forward(50)
-        time.sleep(1)
-        logging.info("current steering angle: %d"%px.dir_current_angle)
-        px.set_dir_servo_angle(-20)
-        logging.info("current steering angle: %d"%px.dir_current_angle)
-        time.sleep(1)
-        px.forward(50)
-        time.sleep(1)
-        px.stop()
-    except KeyboardInterrupt:
-        logging.info("\nCtrl+C pressed. Performing cleanup...")
-        # Place your cleanup code here
-        px.reset()
-        logging.info("Cleanup complete. Exiting.")
-    finally:
-        px.reset()
+    atexit.register(px.close)
+    px.forward(50)
+    time.sleep(1)
+    logging.info("current steering angle: %d"%px.dir_current_angle)
+    px.set_dir_servo_angle(20)
+    logging.info("current steering angle: %d"%px.dir_current_angle)
+    time.sleep(1)
+    px.forward(50)
+    time.sleep(1)
+    logging.info("current steering angle: %d"%px.dir_current_angle)
+    px.set_dir_servo_angle(-20)
+    logging.info("current steering angle: %d"%px.dir_current_angle)
+    time.sleep(1)
+    px.forward(50)
+    time.sleep(1)
