@@ -7,7 +7,7 @@ logger = logging.getLogger(__spec__.name if __spec__ else __name__)
 
 from picarx import Picarx
 
-from picarx.sensing.sensing import Grayscale_Sensing
+from picarx.sensing.grayscale_sensing import Grayscale_Sensing
 
 import atexit
 
