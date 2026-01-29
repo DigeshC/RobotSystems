@@ -25,25 +25,22 @@ class Edge_Detector_Controller(object):
         self.scaling_factor = scaling_factor
         logger.info("Edge Detector Controller initialized")
 
-    def run(self, px: Picarx):
+    def run(self, px: Picarx, steering_direction: float = 0.0):
         try:
-            while True:
-                gs_values = self.gs_sensing.read_values()
-                edge_value = self.edge_detector.detect_edges(gs_values)
-                steering_angle = max(-self.MAX_STEERING_ANGLE, min(self.MAX_STEERING_ANGLE, edge_value * self.scaling_factor * self.MAX_STEERING_ANGLE))
+            steering_angle = max(-self.MAX_STEERING_ANGLE, min(self.MAX_STEERING_ANGLE, steering_direction * self.scaling_factor * self.MAX_STEERING_ANGLE))
 
-                if self.steering_angles_history:
-                    last_angle = self.steering_angles_history[-1]
-                    angle_diff = steering_angle - last_angle
-                    if abs(angle_diff) > self.MAX_STEERING_ANGLE_DIFF:
-                        steering_angle = last_angle + (self.MAX_STEERING_ANGLE_DIFF if angle_diff > 0 else -self.MAX_STEERING_ANGLE_DIFF)
+            if self.steering_angles_history:
+                last_angle = self.steering_angles_history[-1]
+                angle_diff = steering_angle - last_angle
+                if abs(angle_diff) > self.MAX_STEERING_ANGLE_DIFF:
+                    steering_angle = last_angle + (self.MAX_STEERING_ANGLE_DIFF if angle_diff > 0 else -self.MAX_STEERING_ANGLE_DIFF)
 
-                self.steering_angles_history.append(steering_angle)
-                
-                logger.info(f"Grayscale values: {gs_values}, Edge value: {edge_value}, Steering angle: {steering_angle}")
-                
-                px.set_dir_servo_angle(-steering_angle)
-                px.forward(self.DEFAULT_SPEED * (1 - min(abs(edge_value*self.scaling_factor), 0.9)))
+            self.steering_angles_history.append(steering_angle)
+            
+            logger.info(f"Relative Steering Direction: {steering_direction}, Steering angle: {steering_angle}")
+            
+            px.set_dir_servo_angle(-steering_angle)
+            px.forward(self.DEFAULT_SPEED * (1 - min(abs(steering_direction*self.scaling_factor), 0.9)))
         except KeyboardInterrupt:
             logger.info("Exiting edge detector controller.")
             px.close()
@@ -51,5 +48,11 @@ class Edge_Detector_Controller(object):
 if __name__ == "__main__":
     px = Picarx()
     atexit.register(px.close)
+    gs_sensing = Grayscale_Sensing()
+    edge_detector = Edge_Detector(threshold=600, polarity=0)
     edge_detector_controller = Edge_Detector_Controller()
-    edge_detector_controller.run(px)
+    edge = edge_detector.detect_edges(gs_sensing.read_values())
+    edge_detector_controller.run(px, 0.1)
+    print(edge_detector_controller.steering_angles_history)
+
+
