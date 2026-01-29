@@ -26,9 +26,9 @@ class Edge_Detector(object):
         value = 0.0
         
         if left < self.threshold and center >= self.threshold:
-            value = (center-left)/self.center
+            value = (center-left)/center
         elif right < self.threshold and center >= self.threshold:
-            value = (right-center)/self.center
+            value = (right-center)/center
         elif left > self.threshold and right > self.threshold and center < self.threshold:
             value = (right-left)/((right+left)/2)
 
