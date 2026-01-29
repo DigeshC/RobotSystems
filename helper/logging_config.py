@@ -15,10 +15,3 @@ def setup_logging(level=logging.INFO):
         datefmt="%H:%M:%S"
     )
     logging.getLogger().setLevel(logging.INFO)
-
-
-def get_module_logger():
-    import logging, sys
-    spec = sys.modules[__name__].__spec__
-    return logging.getLogger(spec.name if spec else __name__)
-
