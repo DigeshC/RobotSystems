@@ -12,7 +12,7 @@ from picarx.sensing.grayscale_sensing import Grayscale_Sensing
 
 class Edge_Detector_Controller(object):
 
-    DEFAULT_SPEED = 15
+    DEFAULT_SPEED = 10
     MAX_STEERING_ANGLE = 30.0
     
     def __init__(self, scaling_factor: float = 1.0, threshold: int = 600, polarity: int = 0):
@@ -30,8 +30,8 @@ class Edge_Detector_Controller(object):
                 
                 logger.info(f"Grayscale values: {gs_values}, Edge value: {edge_value}, Steering angle: {steering_angle}")
                 
-                px.set_dir_servo_angle(steering_angle)
-                px.forward(self.DEFAULT_SPEED)
+                px.set_dir_servo_angle(-steering_angle)
+                px.forward(self.DEFAULT_SPEED * (1 - abs(edge_value)))
         except KeyboardInterrupt:
             logger.info("Exiting edge detector controller.")
             px.close()
