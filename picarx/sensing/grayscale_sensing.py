@@ -7,6 +7,8 @@ logger = logging.getLogger(__spec__.name if __spec__ else __name__)
 
 from picarx import Picarx
 
+import atexit
+
 on_the_robot = None
 try:
     from robot_hat import ADC
@@ -41,6 +43,7 @@ class Grayscale_Sensing(Sensing):
 
 if __name__ == "__main__":
     px = Picarx()
+    atexit.register(px.close)
     gs_sensing = Grayscale_Sensing()
     try:
         while True:

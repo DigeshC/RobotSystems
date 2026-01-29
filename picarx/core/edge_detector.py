@@ -32,6 +32,9 @@ class Edge_Detector(object):
         elif left > self.threshold and right > self.threshold and center < self.threshold:
             value = (right-left)/((right+left)/2)
 
+        if self.polarity == 1:
+            value = -value
+
         logger.debug(f"Sensor values: {sensor_values}, Detected edges: {value}")
         return value
     
