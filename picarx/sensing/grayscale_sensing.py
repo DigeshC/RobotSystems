@@ -1,5 +1,4 @@
 import logging
-from logdecorator import log_on_start, log_on_end, log_on_error
 
 from helper.logging_config import setup_logging
 setup_logging()
@@ -7,19 +6,16 @@ setup_logging()
 logger = logging.getLogger(__spec__.name if __spec__ else __name__)
 
 from picarx import Picarx
-import picarx.maneuvers
 
 on_the_robot = None
 try:
-    from robot_hat import Pin, ADC, PWM, Servo, fileDB
-    from robot_hat import Grayscale_Module, Ultrasonic, utils
+    from robot_hat import ADC
     on_the_robot = True
 except ImportError:
     # import sys
     # sys.path.append(os.path.abspath(os.path.join(
     #     os.path.dirname(__file__), '..')))
-    from sim_robot_hat import Pin, ADC, PWM, Servo, fileDB
-    from sim_robot_hat import Grayscale_Module, Ultrasonic, utils
+    from sim_robot_hat import ADC
     on_the_robot = False
 
 from picarx.sensing.sensing import Sensing
