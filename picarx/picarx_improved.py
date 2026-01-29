@@ -5,9 +5,9 @@ try:
     from robot_hat import Grayscale_Module, Ultrasonic, utils
     on_the_robot = True
 except ImportError:
-    import sys
-    sys.path.append(os.path.abspath(os.path.join(
-        os.path.dirname(__file__), '..')))
+    # import sys
+    # sys.path.append(os.path.abspath(os.path.join(
+    #     os.path.dirname(__file__), '..')))
     from sim_robot_hat import Pin, ADC, PWM, Servo, fileDB
     from sim_robot_hat import Grayscale_Module, Ultrasonic, utils
     on_the_robot = False
@@ -16,12 +16,12 @@ import time
 import logging
 import math
 import atexit
-from logdecorator import log_on_start, log_on_end, log_on_error
+from logdecorator import log_on_start, log_on_end
 
 from helper.logging_config import setup_logging
 setup_logging()
 
-logger = logging.getLogger("PiCarx_Improved")
+logger = logging.getLogger(__spec__.name if __spec__ else __name__)
 
 def constrain(x, min_val, max_val):
     '''
