@@ -77,23 +77,12 @@ class Image_Sensing(Sensing):
             self.picam2.start()
             self._picam_inited = True
 
-            for fn_name, args in [
-                ("camera_resize", (self.width, self.height)),
-                ("camera_set_fps", (self.fps,)),
-            ]:
-                fn = getattr(Vilib, fn_name, None)
-                if callable(fn):
-                    try:
-                        fn(*args)
-                    except Exception:
-                        pass
-
             if self.warmup_s > 0:
                 time.sleep(self.warmup_s)
 
-            logger.info("Vilib camera started (%dx%d @ %dfps target)", self.width, self.height, self.fps)
+            logger.info("Picamera2 camera started (%dx%d @ %dfps target)", self.width, self.height, self.fps)
         except Exception as e:
-            logger.exception("Failed to start Vilib camera: %s", e)
+            logger.exception("Failed to start Picamera2 camera: %s", e)
             raise
 
     def _start_opencv(self) -> None:
@@ -160,21 +149,19 @@ class Image_Sensing(Sensing):
                 pass
             self._cap = None
 
-        if self.backend == "vilib" and self._picam_inited and Vilib is not None:
-            # Vilib camera_stop exists in most versions
-            stop_fn = getattr(Vilib, "camera_stop", None)
-            if callable(stop_fn):
-                try:
-                    stop_fn()
-                except Exception:
-                    pass
+        if self.backend == "picam" and self._picam_inited and self.picam2 is not None:
+            # Picamera2 camera_stop exists in most versions
+            try:
+                self.picam2.stop()
+            except Exception:
+                pass
             self._picam_inited = False
 
         logger.info("Image sensing module closed")
 
 
 if __name__ == "__main__":
-    sensing = Image_Sensing(backend="vilib", width=640, height=480, fps=30, device_index=0)
+    sensing = Image_Sensing(backend="picam", width=640, height=480, fps=30, device_index=0)
     # atexit.register(sensing.close)
 
     last_t = time.time()
