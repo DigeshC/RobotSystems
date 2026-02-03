@@ -11,10 +11,10 @@ logger = logging.getLogger(__spec__.name if __spec__ else __name__)
 
 try:
     # SunFounder PiCar-X camera helper (works on the robot when the stack is installed)
-    from vilib import Vilib
-    backend = "vilib"
+    from picamera2 import Picamera2
+    backend = "picam"
 except Exception:
-    Vilib = None
+    Picamera2 = None
     backend = "opencv"
 
 import cv2
@@ -31,7 +31,7 @@ class Image_Sensing(Sensing):
         height: int = 480,
         fps: int = 30,
         device_index: int = 0,
-        backend: str = "vilib",
+        backend: str = "picam",
         warmup_s: float = 0.5,
     ):
         atexit.register(self.close)
@@ -42,39 +42,40 @@ class Image_Sensing(Sensing):
         self.warmup_s = float(max(0.0, warmup_s))
 
         self.backend = backend.lower().strip()
-        if self.backend not in ("vilib", "opencv"):
-            raise ValueError("backend must be one of: 'vilib', 'opencv'")
+        if self.backend not in ("picam", "opencv"):
+            raise ValueError("backend must be one of: 'picam', 'opencv'")
 
         self._cap: Optional[cv2.VideoCapture] = None
-        self._vilib_inited = False
+        self._picam_inited = False
 
         logger.info("Image sensing module initializing (backend=%s)", self.backend)
         self._start()
 
     def _start(self) -> None:
         use_backend = self.backend
-        if use_backend == "vilib":
-            if Vilib is None:
-                logger.warning("Vilib not available; falling back to OpenCV backend")
+        if use_backend == "picam":
+            if Picamera2 is None:
+                logger.warning("Picamera2 not available; falling back to OpenCV backend")
                 use_backend = "opencv"
             else:
-                self._start_vilib()
-                self.backend = "vilib"
+                self._start_picam()
+                self.backend = "picam"
                 return
 
         # fallback
         self._start_opencv()
         self.backend = "opencv"
 
-    def _start_vilib(self) -> None:
+    def _start_picam(self) -> None:
         """
-        Start SunFounder Vilib stream.
-        Vilib keeps an internal frame buffer accessible via Vilib.camera_frame.
+        Start SunFounder PiCar-X camera.
+        Picamera2 keeps an internal frame buffer accessible via Picamera2.capture_array().
         """
         try:
-            Vilib.camera_start(vflip=False, hflip=False)
-            Vilib.display(False)  # no GUI window
-            self._vilib_inited = True
+            self.picam2 = Picamera2()
+            self.picam2.configure(self.picam2.create_preview_configuration(main={"size": (640, 480), "format": "RGB888"}))
+            self.picam2.start()
+            self._picam_inited = True
 
             for fn_name, args in [
                 ("camera_resize", (self.width, self.height)),
@@ -125,15 +126,15 @@ class Image_Sensing(Sensing):
         """
         frame: Optional[np.ndarray] = None
 
-        if self.backend == "vilib":
-            # Vilib stores the latest frame in Vilib.camera_frame (BGR ndarray)
+        if self.backend == "picam":
+            # Picamera2 stores the latest frame in Picamera2.capture_array()
             try:
-                frame = getattr(Vilib, "camera_frame", None)
+                frame = self.picam2.capture_array()
                 if frame is None:
-                    logger.debug("Vilib frame not ready yet")
+                    logger.debug("Picamera2 frame not ready yet")
                     return None
             except Exception:
-                logger.debug("Failed to access Vilib frame buffer")
+                logger.debug("Failed to access Picamera2 frame buffer")
                 return None
 
         else:
@@ -159,7 +160,7 @@ class Image_Sensing(Sensing):
                 pass
             self._cap = None
 
-        if self.backend == "vilib" and self._vilib_inited and Vilib is not None:
+        if self.backend == "vilib" and self._picam_inited and Vilib is not None:
             # Vilib camera_stop exists in most versions
             stop_fn = getattr(Vilib, "camera_stop", None)
             if callable(stop_fn):
@@ -167,7 +168,7 @@ class Image_Sensing(Sensing):
                     stop_fn()
                 except Exception:
                     pass
-            self._vilib_inited = False
+            self._picam_inited = False
 
         logger.info("Image sensing module closed")
 

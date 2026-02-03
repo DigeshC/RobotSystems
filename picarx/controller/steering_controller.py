@@ -74,7 +74,7 @@ if __name__ == "__main__":
     # edge_detector = Edge_Detector(threshold=600, polarity=0)
     # edge_detector_controller = Steering_Controller()
     camera = Image_Sensing(
-        backend="vilib",
+        backend="picam",
         width=640,
         height=480,
         fps=10,
