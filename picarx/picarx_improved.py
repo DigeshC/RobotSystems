@@ -62,6 +62,7 @@ class Picarx(object):
                 ultrasonic_pins:list=['D2','D3'],
                 config:str=CONFIG,
                 ):
+        atexit.register(self.close)
         # reset robot_hat
         utils.reset_mcu()
         time.sleep(0.2)
@@ -335,3 +336,4 @@ if __name__ == "__main__":
     time.sleep(1)
     px.forward(50)
     time.sleep(1)
+            # Show debug frame if enabled, else show raw
