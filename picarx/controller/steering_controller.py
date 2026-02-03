@@ -17,10 +17,10 @@ from collections import deque
 
 class Steering_Controller(object):
 
-    MAX_SPEED = 10
+    MAX_SPEED = 100 
     MAX_STEERING_ANGLE = 30.0
     
-    def __init__(self, scaling_factor: float = 2.0, history_len: int = 30, max_angle_diff: float = 2.0, start_speed: int = MAX_SPEED * 0.25):
+    def __init__(self, scaling_factor: float = 2.0, history_len: int = 30, max_angle_diff: float = 2.0, start_speed: int = 60):
         self.scaling_factor = scaling_factor
 
         self.steering_angles_history: deque[float] = deque(maxlen=history_len)
@@ -51,7 +51,8 @@ class Steering_Controller(object):
             self.steering_angles_history.append(steering_angle)
                         
             px.set_dir_servo_angle(-steering_angle)
-            speed_factor = 1 - min(abs(steering_direction * self.scaling_factor), 0.9)
+            # speed_factor = 1 - min(abs(steering_direction * self.scaling_factor), 0.9)
+            speed_factor = 1
             # Slow down on sharp turns
             # Increase speed slowly if not sharp turns
             if self.sharp_turns:
@@ -70,6 +71,7 @@ class Steering_Controller(object):
 
 if __name__ == "__main__":
     px = Picarx()
+    px.set_cam_tilt_angle(-30)
     # gs_sensing = Grayscale_Sensing()
     # edge_detector = Edge_Detector(threshold=600, polarity=0)
     # edge_detector_controller = Steering_Controller()
@@ -77,11 +79,11 @@ if __name__ == "__main__":
         backend="picam",
         width=640,
         height=480,
-        fps=10,
+        fps=1,
         device_index=0,
         warmup_s=0.5,
     )
-    detector = Contour_Detector(threshold=120, polarity=1, min_contour_area=300, debug_draw=False)
+    detector = Contour_Detector(threshold=120, polarity=0, min_contour_area=200, debug_draw=False)
     controller = Steering_Controller()
     while True:
 
@@ -91,9 +93,9 @@ if __name__ == "__main__":
         edge = detector.detect(frame)
         controller.run(px, steering_direction=edge)
 
-        to_show = detector.last_debug_image if detector.last_debug_image is not None else frame
-        cv2.imshow("contour_debug", to_show)
+        #to_show = detector.last_debug_image if detector.last_debug_image is not None else frame
+        #cv2.imshow("contour_debug", to_show)
 
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
+        #if cv2.waitKey(1) & 0xFF == ord("q"):
+        #    break
 
