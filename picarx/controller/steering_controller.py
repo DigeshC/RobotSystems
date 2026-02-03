@@ -77,11 +77,11 @@ if __name__ == "__main__":
         backend="vilib",
         width=640,
         height=480,
-        fps=30,
+        fps=10,
         device_index=0,
         warmup_s=0.5,
     )
-    detector = Contour_Detector(threshold=120, polarity=1, min_contour_area=300, debug_draw=True)
+    detector = Contour_Detector(threshold=120, polarity=1, min_contour_area=300, debug_draw=False)
     controller = Steering_Controller()
     while True:
 
