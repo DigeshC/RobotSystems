@@ -81,7 +81,7 @@ def main():
 
     # ConsumerProducer: interpret grayscale -> edge value
     edge_cp = ConsumerProducer(
-        consumer_producer_function=edge_detector.detect_edges,
+        consumer_producer_function=edge_detector.detect,
         input_buses=gs_bus,
         output_buses=edge_bus,
         delay=INTERP_DELAY,
