@@ -3,8 +3,10 @@ from concurrent.futures import ThreadPoolExecutor
 from threading import Event
 from picarx import Picarx
 from picarx.bus.bus import Bus
-from picarx.sensing.grayscale_sensing import Grayscale_Sensing
-from picarx.core.edge_detector import Edge_Detector
+from picarx.sensing.sensing import Sensing
+from picarx.sensing.image_sensing import Image_Sensing
+from picarx.core.detector import Detector
+from picarx.core.contour_detector import Contour_Detector
 from picarx.controller.steering_controller import Steering_Controller
 from picarx.sensing.sensing import Sensing
 
@@ -17,13 +19,13 @@ def handle_exception(future):
         print(f'Exception in worker thread: {exception}')
     # Define robot task
 
-def sensor_task(sensor: Sensing, sensor_bus: Bus, sensor_delay: float = 1.0):
+def sensor_task(sensor: Sensing, sensor_bus: Bus, sensor_delay: float = 0.02):
     while not shutdown_event.is_set():
         sensor_values = sensor.read_values()
         sensor_bus.write(sensor_values)
         sleep(sensor_delay)
 
-def interpretor_task(detector: Edge_Detector, sensor_bus: Bus, interpretor_bus: Bus, interpretor_delay: float = 1.0):
+def interpretor_task(detector: Detector, sensor_bus: Bus, interpretor_bus: Bus, interpretor_delay: float = 0.02):
     while not shutdown_event.is_set():
         sensor_values = sensor_bus.read()
         if sensor_values is not None:
@@ -31,7 +33,7 @@ def interpretor_task(detector: Edge_Detector, sensor_bus: Bus, interpretor_bus: 
             interpretor_bus.write(steering_direction)
         sleep(interpretor_delay)
 
-def controller_task(px: Picarx, controller: Steering_Controller, interpretor_bus: Bus, controller_delay: float = 1.0):
+def controller_task(px: Picarx, controller: Steering_Controller, interpretor_bus: Bus, controller_delay: float = 0.02):
     while not shutdown_event.is_set():
         steering_direction = interpretor_bus.read()
         if steering_direction is not None:
@@ -41,11 +43,11 @@ def controller_task(px: Picarx, controller: Steering_Controller, interpretor_bus
 
 if __name__ == '__main__':
     futures = []
-    sensor = Grayscale_Sensing()
-    detector = Edge_Detector()
+    sensor = Image_Sensing()
+    detector = Contour_Detector()
     controller = Steering_Controller()
     px = Picarx()
-
+    px.set_cam_tilt_angle(-30)
     sensor_bus = Bus()
     interpretor_bus = Bus()
 
