@@ -91,7 +91,10 @@ def main():
 
     # Consumer: steer based on edge value
     def steer(edge_value):
-        edge_controller.run(px, edge_value)
+        if us_clear_bus.get_message():
+            edge_controller.run(px, edge_value)
+        else:
+            px.stop()
     steering_consumer = Consumer(
         consumer_function=steer,
         input_buses=edge_bus,
