@@ -29,6 +29,7 @@ from picarx.rossros import (
 # --- Configuration ---
 RUN_DURATION = 30       # seconds
 SENSOR_DELAY = 0.05     # 50ms between sensor reads
+US_SENSOR_DELAY = 0.1   # 100ms between ultrasonic reads (HC-SR04 needs ~60ms min)
 INTERP_DELAY = 0.05     # 50ms between interpretations
 CONTROL_DELAY = 0.05    # 50ms between control updates
 PRINT_DELAY = 0.25      # 250ms between prints
@@ -108,7 +109,7 @@ def main():
     us_producer = Producer(
         producer_function=us_sensing.read_values,
         output_buses=us_distance_bus,
-        delay=SENSOR_DELAY,
+        delay=US_SENSOR_DELAY,
         termination_buses=termination_bus,
         name="Ultrasonic Sensor Producer",
     )

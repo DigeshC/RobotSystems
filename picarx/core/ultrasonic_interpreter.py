@@ -18,9 +18,12 @@ class Ultrasonic_Interpreter(object):
         Returns True if the path is clear, False if an obstacle is detected.
         Error codes (-1, -2) are treated as 'obstacle detected' for safety.
         """
-        if distance < 0:
-            logger.warning("Ultrasonic error code: %s, treating as obstacle", distance)
+        if distance == -1:
+            logger.warning("Ultrasonic timeout (-1), treating as obstacle")
             return False
+        if distance == -2:
+            logger.debug("Ultrasonic out of range (-2), treating as clear")
+            return True
 
         is_clear = distance > self.safe_distance
         logger.debug("Distance: %.1f cm, clear: %s", distance, is_clear)
