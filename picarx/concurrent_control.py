@@ -3,7 +3,7 @@
 Concurrent line-follower with ultrasonic obstacle avoidance using RossROS.
 
 Control loops:
-  1. Grayscale sensor -> Edge interpreter -> Steering controller (line following)
+  1. Camera -> Contour detector -> Steering controller (line following)
   2. Ultrasonic sensor -> Distance interpreter -> Speed controller (obstacle avoidance)
   3. Timer -> termination bus (shuts everything down after a set duration)
 """
@@ -16,9 +16,9 @@ setup_logging()
 logger = logging.getLogger(__spec__.name if __spec__ else __name__)
 
 from picarx import Picarx
-from picarx.sensing.grayscale_sensing import Grayscale_Sensing
+from picarx.sensing.image_sensing import Image_Sensing
 from picarx.sensing.ultrasonic_sensing import Ultrasonic_Sensing
-from picarx.core.edge_detector import Edge_Detector
+from picarx.core.contour_detector import Contour_Detector
 from picarx.core.ultrasonic_interpreter import Ultrasonic_Interpreter
 from picarx.controller.steering_controller import Steering_Controller as Edge_Detector_Controller
 from picarx.controller.ultrasonic_controller import Ultrasonic_Controller
@@ -29,6 +29,7 @@ from picarx.rossros import (
 # --- Configuration ---
 RUN_DURATION = 30       # seconds
 SENSOR_DELAY = 0.05     # 50ms between sensor reads
+CAM_SENSOR_DELAY = 0.033  # ~30fps camera read rate
 US_SENSOR_DELAY = 0.1   # 100ms between ultrasonic reads (HC-SR04 needs ~60ms min)
 INTERP_DELAY = 0.05     # 50ms between interpretations
 CONTROL_DELAY = 0.05    # 50ms between control updates
@@ -41,8 +42,8 @@ def main():
     atexit.register(px.close)
 
     # --- Sensor / interpreter / controller instances ---
-    gs_sensing = Grayscale_Sensing()
-    edge_detector = Edge_Detector(threshold=600, polarity=0)
+    cam_sensing = Image_Sensing(backend="picam", width=640, height=480, fps=30, warmup_s=0.5)
+    contour_detector = Contour_Detector(threshold=120, polarity=0, min_contour_area=300)
     edge_controller = Edge_Detector_Controller(scaling_factor=2.0)
 
     us_sensing = Ultrasonic_Sensing(px)
@@ -54,7 +55,7 @@ def main():
     termination_bus = Bus(initial_message=False, name="Termination Bus")
 
     # Line-following buses
-    gs_bus = Bus(initial_message=[0, 0, 0], name="Grayscale Bus")
+    cam_bus = Bus(initial_message=None, name="Camera Bus")
     edge_bus = Bus(initial_message=0.0, name="Edge Bus")
 
     # Ultrasonic buses
@@ -71,23 +72,23 @@ def main():
     )
 
     # --- Line-following pipeline ---
-    # Producer: read grayscale sensor values
-    gs_producer = Producer(
-        producer_function=gs_sensing.read_values,
-        output_buses=gs_bus,
-        delay=SENSOR_DELAY,
+    # Producer: read camera frame
+    cam_producer = Producer(
+        producer_function=cam_sensing.read_values,
+        output_buses=cam_bus,
+        delay=CAM_SENSOR_DELAY,
         termination_buses=termination_bus,
-        name="Grayscale Sensor Producer",
+        name="Camera Sensor Producer",
     )
 
-    # ConsumerProducer: interpret grayscale -> edge value
+    # ConsumerProducer: detect contour -> steering value
     edge_cp = ConsumerProducer(
-        consumer_producer_function=edge_detector.detect,
-        input_buses=gs_bus,
+        consumer_producer_function=contour_detector.detect,
+        input_buses=cam_bus,
         output_buses=edge_bus,
         delay=INTERP_DELAY,
         termination_buses=termination_bus,
-        name="Edge Detector Interpreter",
+        name="Contour Detector",
     )
 
     # Consumer: steer based on edge value
@@ -136,12 +137,12 @@ def main():
     )
 
     # --- Printers (optional debug output) ---
-    gs_printer = Printer(
-        printer_bus=(gs_bus, edge_bus),
+    cam_printer = Printer(
+        printer_bus=(edge_bus,),
         delay=PRINT_DELAY,
         termination_buses=termination_bus,
-        name="Grayscale Printer",
-        print_prefix="GS/Edge:",
+        name="Camera Printer",
+        print_prefix="Contour/Edge:",
     )
 
     us_printer = Printer(
@@ -157,7 +158,7 @@ def main():
     runConcurrently([
         timer,
         # Line-following loop
-        gs_producer,
+        cam_producer,
         edge_cp,
         steering_consumer,
         # Ultrasonic obstacle avoidance loop
@@ -165,7 +166,7 @@ def main():
         us_interp_cp,
         us_drive_consumer,
         # Debug printers
-        gs_printer,
+        cam_printer,
         us_printer,
     ])
 
