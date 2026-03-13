@@ -20,7 +20,7 @@ from picarx.sensing.grayscale_sensing import Grayscale_Sensing
 from picarx.sensing.ultrasonic_sensing import Ultrasonic_Sensing
 from picarx.core.edge_detector import Edge_Detector
 from picarx.core.ultrasonic_interpreter import Ultrasonic_Interpreter
-from picarx.controller.edge_detector_controller import Edge_Detector_Controller
+from picarx.controller.steering_controller import Steering_Controller as Edge_Detector_Controller
 from picarx.controller.ultrasonic_controller import Ultrasonic_Controller
 from picarx.rossros import (
     Bus, Producer, ConsumerProducer, Consumer, Timer, Printer, runConcurrently,
@@ -42,11 +42,11 @@ def main():
     # --- Sensor / interpreter / controller instances ---
     gs_sensing = Grayscale_Sensing()
     edge_detector = Edge_Detector(threshold=600, polarity=0)
-    edge_controller = Edge_Detector_Controller(scaling_factor=2.0, threshold=600, polarity=0)
+    edge_controller = Edge_Detector_Controller(scaling_factor=2.0)
 
     us_sensing = Ultrasonic_Sensing(px)
     us_interpreter = Ultrasonic_Interpreter(safe_distance=30.0)
-    us_controller = Ultrasonic_Controller(speed=Edge_Detector_Controller.DEFAULT_SPEED)
+    us_controller = Ultrasonic_Controller(speed=edge_controller.start_speed)
 
     # --- Buses ---
     # Termination bus (Timer writes countdown here; all threads watch it)
